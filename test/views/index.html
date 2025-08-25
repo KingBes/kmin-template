@@ -1,0 +1,48 @@
+<template>
+    <div class="counter">
+        <button @click="decrement">-</button>
+        <span>Count: {{data.count}}</span>
+        <button @click="increment">+</button>
+    </div>
+    <button @click="reset">Reset</button>
+    <p>name: {{data.name}}</p>
+</template>
+<script type="module">
+
+    const DEMO = "demo";
+
+    customElements.define('demo-ui', class
+        extends
+        KMin {
+        // 定义动态数据
+        data = this.state({
+            count: 0,
+            name: kmStr($name),
+            age: kmNum($age),
+            sex: kmStr($sex),
+            bool: kmBool($bool),
+            list: kmJson($json),
+        })
+
+        // 增加
+        increment() {
+            this.data.count++;
+            console.log(this.data.count)
+        }
+        // 减少
+        decrement() {
+            this.data.count--;
+            console.log(this.data.count)
+        }
+        // 重置
+        reset() {
+            this.data.count = 0;
+            console.log(this.data.count)
+        }
+    })
+</script>
+<style>
+    h1 {
+        color: red;
+    }
+</style>

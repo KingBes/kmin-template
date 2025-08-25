@@ -1,0 +1,22 @@
+{
+    "name": "kmin/template",
+    "description": "一 个 用 于 开 发 kmin.js 的 php 模 板 引 擎",
+    "type": "library",
+    "require": {
+        "php": ">=8.4"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Kmin\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "KingBes",
+            "email": "1164601554@qq.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
