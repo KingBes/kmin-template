@@ -122,33 +122,22 @@ return response($body,200,['Content-Type'=>'text/javascript']);
 
 ## webman 框架
 
-在 `webman` 框架中 , 修改配置 `config/view.php`, 和 `webman` 文档一样
-
-```php
-
-use Kmin\KminView;
-
-return [
-    'handler' => KminView::class,
-]
-
-```
-
-重新封装公共模板方法
+公共模板方法
 
 ```php
 /**
- * KMin View response
- * @param mixed $template
- * @param array $vars
- * @param string|null $app
- * @param string|null $plugin
+ * kmin view response
+ *
+ * @param mixed $template 模板文件名
+ * @param array $vars 模板变量
+ * @param string|null $app 应用名称
+ * @param string|null $plugin 插件名称
  * @return Response
  */
-function view(mixed $template = null, array $vars = [], ?string $app = null, ?string $plugin = null): Response
-{
-    [$template, $vars, $app, $plugin] = template_inputs($template, $vars, $app, $plugin);
-    $handler = \config($plugin ? "plugin.$plugin.view.handler" : 'view.handler');
-    return new Response(200, ['Content-Type'=>'text/javascript'], $handler::render($template, $vars, $app, $plugin));
-}
+function kmin_view(
+    mixed $template = null,
+    array $vars = [],
+    ?string $app = null,
+    ?string $plugin = null
+): Response 
 ```

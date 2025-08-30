@@ -9,7 +9,10 @@
     "autoload": {
         "psr-4": {
             "Kmin\\": "src/"
-        }
+        },
+        "files": [
+            "helpers.php"
+        ]
     },
     "authors": [
         {
