@@ -11,7 +11,7 @@
             "Kmin\\": "src/"
         },
         "files": [
-            "helpers.php"
+            "./src/helpers.php"
         ]
     },
     "authors": [
