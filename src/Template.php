@@ -29,6 +29,7 @@ class Template
         'view_path' => '',
         'cache_path' => '',
         'cache_time' => 0,
+        'view_suffix' => 'html',
     ];
 
     /**
@@ -113,6 +114,18 @@ class Template
                 return `{$tpl}`;
             }
         ", $js);
+
+        $mainFile = $this->config['view_path'] . 'main.' . $this->config['view_suffix'];
+        if (file_exists($mainFile)) {
+            preg_match('/\s*customElements.define\([\'"]([\w-]+)[\'"],/', $js, $matches);
+            if (!isset($matches[1])) {
+                throw new Exception('The template file does not define a custom element.');
+            }
+            $TagName = $matches[1];
+            $mainDom = HTMLDocument::createFromString(file_get_contents($mainFile));
+            $mainDom->querySelector("body")->innerHTML = "<{$TagName}></{$TagName}><script>{$js}</script>";
+            return $mainDom->saveHTML();
+        }
         return $js;
     }
 
@@ -129,7 +142,7 @@ class Template
             $this->data = array_merge($this->data, $vars);
         }
         // 模板文件路径
-        $tplFile  = $this->config['view_path'] . $template;
+        $tplFile  = $this->config['view_path'] . $template . '.' . $this->config['view_suffix'];
         if (!file_exists($tplFile)) {
             throw new Exception('The template file does not exist:' . $tplFile);
         }
