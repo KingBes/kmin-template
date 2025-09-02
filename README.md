@@ -94,9 +94,9 @@ customElements.define('这里和KMim.js的组件名称要求一样', class exten
 
 会在应用的`view`目录下
 
-显示路由模板页面,会嵌入到`main.hml`模板中的 `<body>` 标签里面使用
+显示路由模板页面,会嵌入到`main.html`模板中的 `<body>` 标签里面使用
 
-如果`main.hml`不存在会自动生成，你也可以自定义一个`main.hml`模板文件
+如果`main.hml`不存在会自动生成，你也可以自定义一个`main.html`模板文件
 
 ```php
 /**
@@ -106,7 +106,7 @@ customElements.define('这里和KMim.js的组件名称要求一样', class exten
  * @param array $vars 模板变量
  * @param string|null $app 应用名称
  * @param string|null $plugin 插件名称
- * @return Response
+ * @return Response 响应的是html页面
  */
 function km_view(
     mixed $template = null,
@@ -128,7 +128,7 @@ function km_view(
  * @param array $vars 模板变量
  * @param string|null $app 应用名称
  * @param string|null $plugin 插件名称
- * @return Response
+ * @return Response 响应的是js页面
  */
 function km_component(
     mixed $template = null,
