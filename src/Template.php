@@ -210,6 +210,12 @@ class Template
             return false;
         }
 
+        // 检查main文件是否被修改
+        $mainFile = $this->config['view_path'] . 'main.' . $this->config['view_suffix'];
+        if (file_exists($mainFile) && filemtime($mainFile) > filemtime($cacheFile)) {
+            return false;
+        }
+
         // 检查缓存是否过期
         if (
             $this->config['cache_time'] > 0

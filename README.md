@@ -2,6 +2,10 @@
 
 一 个 用 于 开 发 kmin.js 的 php 模 板 引 擎
 
+[kmin.js](http://kminjs.kllxs.top/) 
+
+[webman](https://www.workerman.net/doc/webman/)
+
 ## 要求
 
 - php 8.4 及以上版本
@@ -11,34 +15,6 @@
 
 ```bash
 composer require kmin/template
-```
-
-## 配置
-
-可以在实例化 `Kmin\Template` 类的时候传入模板引擎的配置参数
-
-```php
-$config = [
-	'view_path'	    =>	'./template/',
-	'cache_path'	=>	'./runtime/'
-];
-$template = new \Kmin\Template($config);
-```
-
-## 渲染模板
-
-和常规的模板引擎一样，只需要传入模板文件的文件名和模板变量即可
-
-```php
-$template->fetch('index', ['name' => 'kmin']);
-```
-
-在`kmin.js`中通常接收的组件不是字符串而是js代码,所以响应时要返回js格式
-
-```php
-$body = $template->fetch('index', ['name' => 'kmin']);
-// 返回js格式
-return response($body,200,['Content-Type'=>'text/javascript']);
 ```
 
 ## 模板格式
@@ -81,12 +57,6 @@ customElements.define('这里和KMim.js的组件名称要求一样', class exten
 
 在模板中输出变量的方法很简单,我们可以在模板任意地方使用
 
-```php
-$body = $template->fetch('index', ['name' => 'kmin']);
-// 返回js格式
-return response($body,200,['Content-Type'=>'text/javascript']);
-```
-
 输出变量:
 
 - 字符串 `kmStr(变量名)`
@@ -120,9 +90,13 @@ return response($body,200,['Content-Type'=>'text/javascript']);
 </script>
 ```
 
-## webman 框架
+## 公共模板方法
 
-公共模板方法
+会在应用的`view`目录下
+
+显示路由模板页面,会嵌入到`main.hml`模板中的 `<body>` 标签里面使用
+
+如果`main.hml`不存在会自动生成，你也可以自定义一个`main.hml`模板文件
 
 ```php
 /**
@@ -134,7 +108,29 @@ return response($body,200,['Content-Type'=>'text/javascript']);
  * @param string|null $plugin 插件名称
  * @return Response
  */
-function kmin_view(
+function km_view(
+    mixed $template = null,
+    array $vars = [],
+    ?string $app = null,
+    ?string $plugin = null
+): Response 
+```
+
+会在应用的 `component` 目录下
+
+会返回 `js` 页面格式, 使用 `import "你的组件路由链接"` 来引入组件
+
+```php
+/**
+ * kmin component response
+ *
+ * @param mixed $template 模板文件名
+ * @param array $vars 模板变量
+ * @param string|null $app 应用名称
+ * @param string|null $plugin 插件名称
+ * @return Response
+ */
+function km_component(
     mixed $template = null,
     array $vars = [],
     ?string $app = null,
