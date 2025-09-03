@@ -98,6 +98,8 @@ customElements.define('这里和KMim.js的组件名称要求一样', class exten
 
 如果`main.hml`不存在会自动生成，你也可以自定义一个`main.html`模板文件
 
+记得在`main.html`模板中引入`kmin.js`,`main.html`默认加入`kmin.js`,请根据实际情况修改!
+
 ```php
 /**
  * kmin view response
