@@ -19,7 +19,5 @@
             "name": "KingBes",
             "email": "1164601554@qq.com"
         }
-    ],
-    "minimum-stability": "dev",
-    "prefer-stable": true
+    ]
 }
