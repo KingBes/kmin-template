@@ -123,7 +123,7 @@ class Template
             }
             $TagName = $matches[1];
             $mainDom = HTMLDocument::createFromString(file_get_contents($mainFile));
-            $mainDom->querySelector("body")->innerHTML = "<{$TagName}></{$TagName}><script>{$js}</script>";
+            $mainDom->querySelector("body")->innerHTML = "<{$TagName}></{$TagName}><script type=\"module\">{$js}</script>";
             return $mainDom->saveHTML();
         }
         return $js;
