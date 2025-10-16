@@ -29,7 +29,8 @@ class Template
         'view_path' => '',
         'cache_path' => '',
         'cache_time' => 0,
-        'view_suffix' => 'html',
+        'view_suffix' => 'php',
+        'is_code' => false,
     ];
 
     /**
@@ -43,6 +44,7 @@ class Template
         'kmVar' => '/kmVar\(([^\)]+)\)/',
         'kmBool' => '/kmBool\(([^\)]+)\)/',
         'kmJson' => '/kmJson\(([^\)]+)\)/',
+        'kmInclude' => '/kmInclude\(([^\)]+)\)/',
     ];
 
     /**
@@ -101,32 +103,24 @@ class Template
     protected function parseTpl(string $tpl): string
     {
         $dom = HTMLDocument::createFromString($tpl, LIBXML_NOERROR);
-        $tpl = $dom->querySelector('template')->innerHTML;
-        $css = $dom->querySelector('style')->innerHTML;
         $js = $dom->querySelector('script')->innerHTML;
-        // 匹配 "class extends KMin {"
-        $js = preg_replace('/\s*class\s+extends\s+KMin\s+{/', "
-        class extends KMin {
-            css() {
-                return `{$css}`;
-            }
-            render() {
-                return `{$tpl}`;
-            }
-        ", $js);
+        return $js;
+    }
 
+    /**
+     * 解析入口模板
+     *
+     * @param string $content 模板内容
+     * @return string 解析后的内容
+     */
+    protected function parseMain(string $content): string
+    {
         $mainFile = $this->config['view_path'] . 'main.' . $this->config['view_suffix'];
         if (file_exists($mainFile)) {
-            preg_match('/\s*customElements.define\([\'"]([\w-]+)[\'"],/', $js, $matches);
-            if (!isset($matches[1])) {
-                throw new Exception('The template file does not define a custom element.');
-            }
-            $TagName = $matches[1];
-            $mainDom = HTMLDocument::createFromString(file_get_contents($mainFile));
-            $mainDom->querySelector("body")->innerHTML = "<{$TagName}></{$TagName}><script type=\"module\">{$js}</script>";
-            return $mainDom->saveHTML();
+            $mainContent = file_get_contents($this->config['view_path'] . 'main.' . $this->config['view_suffix']);
+            $content = str_replace('kmContent()', $content, $mainContent);
         }
-        return $js;
+        return $content;
     }
 
     /**
@@ -143,6 +137,7 @@ class Template
         }
         // 模板文件路径
         $tplFile  = $this->config['view_path'] . $template . '.' . $this->config['view_suffix'];
+
         if (!file_exists($tplFile)) {
             throw new Exception('The template file does not exist:' . $tplFile);
         }
@@ -151,7 +146,12 @@ class Template
         // 检查是否需要重新编译模板
         if (!$this->isCacheValid($cacheFile, $tplFile)) {
             $content = file_get_contents($tplFile);
-            $content = $this->parseTpl($content);
+            if ($this->config['is_code']) { // 如果是代码模板，需要解析模板
+                $content = $this->parseTpl($content);
+            } else {
+                // 模板布局
+                $content = $this->parseMain($content);
+            }
             $compiled = $this->parseVars($content);
             file_put_contents($cacheFile, $compiled);
         }
@@ -191,6 +191,52 @@ class Template
         return "JSON.parse(<?php echo json_encode({$matches[1]}, JSON_UNESCAPED_UNICODE); ?>)";
     }
 
+    protected function kmInclude($matches)
+    {
+        $file = $this->config['view_path'] . $matches[1] . '.' . $this->config['view_suffix'];
+        if (!file_exists($file)) {
+            throw new Exception('The template file does not exist:' . $file);
+        }
+        return "<?php include '{$file}'; ?>";
+    }
+
+    /**
+     * 检查目录是否相等
+     *
+     * @param string $dir1 目录1
+     * @param string $dir2 目录2
+     * @return boolean
+     */
+    protected function isEqDir(string $dir1, string $dir2): bool
+    {
+        $dir1 = $this->fileReplace($dir1);
+        $dir2 = $this->fileReplace($dir2);
+        if (str_ends_with($dir1, DIRECTORY_SEPARATOR)) {
+            // 删除最后一个目录分隔符
+            $dir1 = rtrim($dir1, DIRECTORY_SEPARATOR);
+        }
+        if (str_ends_with($dir2, DIRECTORY_SEPARATOR)) {
+            // 删除最后一个目录分隔符
+            $dir2 = rtrim($dir2, DIRECTORY_SEPARATOR);
+        }
+        return $dir1 === $dir2;
+    }
+
+    /**
+     * 替换文件路径中的分隔符
+     *
+     * @param string $path 文件路径
+     * @return string
+     */
+    protected function fileReplace(string $path): string
+    {
+        return str_replace(
+            ['\\', '/', '\\\\', '//'],
+            DIRECTORY_SEPARATOR,
+            $path
+        );
+    }
+
     /**
      * 检查缓存是否有效
      *
@@ -200,6 +246,7 @@ class Template
      */
     protected function isCacheValid(string $cacheFile, string $tplFile): bool
     {
+
         // 缓存文件不存在
         if (!file_exists($cacheFile)) {
             return false;
@@ -210,10 +257,13 @@ class Template
             return false;
         }
 
-        // 检查main文件是否被修改
+        // 判断入口模板是否存在
         $mainFile = $this->config['view_path'] . 'main.' . $this->config['view_suffix'];
-        if (file_exists($mainFile) && filemtime($mainFile) > filemtime($cacheFile)) {
-            return false;
+        if (file_exists($mainFile)) {
+            // 检查入口模板是否被修改
+            if (filemtime($mainFile) > filemtime($cacheFile)) {
+                return false;
+            }
         }
 
         // 检查缓存是否过期

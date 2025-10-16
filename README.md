@@ -1,141 +1,144 @@
 # kmin-template
 
-一 个 用 于 开 发 kmin.js 的 webman 模 板 引 擎
+一 个 用 于 开 发 kmin.js 的 webman 模 板 引 擎，也 可 以 说 是 js 模 板 引 擎 。
 
 [kmin.js](http://kminjs.kllxs.top/) 
 
 [webman](https://www.workerman.net/doc/webman/)
 
-## 要求
-
 - php 8.4 及以上版本
-- ext-dom 扩展
 
 ## 安装
+
+1. composer 安装
 
 ```bash
 composer require kmin/template
 ```
 
-## 模板格式
+2. 修改配置`config/view.php` 为
 
-```html
-<template>
-    <!-- 你自己的html代码 -->
-</template>
-<script type="module">
-    // 你自己的js代码
-    customElements.define('这里和KMim.js的组件名称要求一样', class extends KMin {
-        // 你的KMim.js的组件内容
-    })
-</script>
-<style>
-    /* 你自己的css代码 */
-</style>
+```php
+<?php
+use Kmin\View;
+
+return [
+    'handler' => View::class
+];
 ```
 
-生成结果:（生成对于的`css`函数和`render`函数）
+3. 例子如下
 
-```js
-// 你自己的js代码
-customElements.define('这里和KMim.js的组件名称要求一样', class extends KMin {
-    css() {
-        return `
-            /* 你自己的css代码 */
-        `
+`app/controller/UserController.php` 
+
+```php
+<?php
+namespace app\controller;
+
+use support\Request;
+
+class UserController
+{
+    public function hello(Request $request)
+    {
+        // 也可以使用公共函数 km_view 来渲染模板, 这样就不用修改配置文件
+        return view('user/hello', ['name' => 'webman']);
     }
-    render() {
-        return `
-            <!-- 你自己的html代码 -->
-        `
-    }
-    // 你的KMim.js的组件内容
-})
+}
 ```
 
-## 变量输出
+> 注意：尽可能在`script` 标签里面完成, 但不是必须的
 
-在模板中输出变量的方法很简单,我们可以在模板任意地方使用
+`app/view/user/hello.php`文件
 
-输出变量:
-
-- 字符串 `kmStr(变量名)`
-- 数字 `kmNum(变量名)`
-- 布尔值 `kmBool(变量名)`
-- json字符串 `kmJson(变量名)`
-- `kmVar(变量名)` 输出变量的原始值
-
-例如1:
-
-```html
-<template>
-    <div>
-        <p>姓名: kmStr($name)</p>
-    </div>
-</template>
-```
-
-例如2:
-
-```html
-<template>
-    ...
-</template>
-<script type="module">
-    customElements.define('组件名', class extends KMin {
-        data = this.state({
-            name: kmStr($name), // 兼容js代码
-        })
-    })
+```php
+<script>
+    console.log('hello kmStr($name)');
 </script>
 ```
 
-## 公共模板方法
+## 配置说明
 
-会在应用的`view`目录下
-
-显示路由模板页面,会嵌入到`main.html`模板中的 `<body>` 标签里面使用
-
-如果`main.hml`不存在会自动生成，你也可以自定义一个`main.html`模板文件
-
-记得在`main.html`模板中引入`kmin.js`,`main.html`默认加入`kmin.js`,请根据实际情况修改!
+`config/plugin/kmin/template/app.php` 文件
 
 ```php
-/**
- * kmin view response
- *
- * @param mixed $template 模板文件名
- * @param array $vars 模板变量
- * @param string|null $app 应用名称
- * @param string|null $plugin 插件名称
- * @return Response 响应的是html页面
- */
-function km_view(
-    mixed $template = null,
-    array $vars = [],
-    ?string $app = null,
-    ?string $plugin = null
-): Response 
+<?php
+return [
+    'enable' => true,
+    'component' => [
+        'enable' => true, // 是否开启组件
+        'dir' => [ // 组件路由目录 /kmin/component
+            "/" => app_path('component'), // “/” => 表示路由: /kmin/component/xxx
+            // "/mm" => app_path('mm'), // “/mm” => 表示路由: /kmin/component/mm/xxx
+            // ... 其他组件目录
+        ]
+    ],
+];
 ```
 
-会在应用的 `component` 目录下
+### 例子
 
-会返回 `js` 页面格式, 使用 `import "你的组件路由链接"` 来引入组件
+`"/" => app_path('component')`：
+
+路由: `/kmin/component/hello`
+文件： `app/component/hello.php`
 
 ```php
-/**
- * kmin component response
- *
- * @param mixed $template 模板文件名
- * @param array $vars 模板变量
- * @param string|null $app 应用名称
- * @param string|null $plugin 插件名称
- * @return Response 响应的是js页面
- */
-function km_component(
-    mixed $template = null,
-    array $vars = [],
-    ?string $app = null,
-    ?string $plugin = null
-): Response 
+<script>
+    console.log('hello 我是组件');
+</script>
+```
+
+> 注意：必须在`script` 标签里面完成, 它只响应 `script` 标签里面的内容, 也就是说它响应的是`js`(`<script src="/kmin/component/hello"></script>`)。
+
+具体组件路由逻辑看 `config/plugin/kmin/template/route.php` 文件(懂哥可操)
+
+## 模板引擎
+
+### 入门布局
+
+在试图文件里的根目录可以创建 `main.php` 文件, 它是所有试图文件的布局文件。
+
+`app/view/main.php` 文件
+
+```php
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    kmContent() // 这里是视图文件的内容,因为试图文件都是整个 script 标签输出的
+</body>
+</html>
+```
+
+### 变量输出
+
+在视图文件里可以使用 `kmStr($name)` 来输出变量 `$name`。
+
+`app/view/user/hello.php` 文件
+
+```php
+<script>
+    console.log('hello kmStr($name)');
+</script>
+```
+
+| 变量 | 说明 |
+| --- | --- |
+| `kmStr($str)` | 输出字符串变量 `$str` |
+| `kmNum($num)` | 输出数字变量 `$num` |
+| `kmVar($var)` | 输出变量 `$var` |
+| `kmJson($array)` | 输出 json 变量 `$array` |
+| `kmBool($bool)` | 输出布尔变量 `$bool` |
+| `kmInclude($file)` | 包含文件 `$file` 会在试图目录查找文件 |
+
+
+可以使用原生PHP代码
+
+```php
+<?php echo 'Hello,world!'; ?>
 ```
